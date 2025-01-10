@@ -1,26 +1,17 @@
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Dict, Optional
+from typing import Dict, Optional
 
 from com.dkgndianko.ceeli.base_client import BaseClient
-
+from com.dkgndianko.ceeli.utils.param_types import SubPath
+from com.dkgndianko.ceeli.utils.parameters import compile_path
 
 DEFAULT_HOME_PATH = "/"
 HOME_NAME = "home"
-@dataclass
-class SubPathArg:
-    name: str
-    default_value: Any
-    mandatory: bool
-@dataclass
-class SubPath:
-    format: str
-    args: List[SubPathArg]
 
 
 def parse_path(input_format: str) -> SubPath:
     without_leading_slash = input_format[1:] if input_format.startswith("/") else input_format
-    return SubPath(format=without_leading_slash, args=[])
+    return compile_path(without_leading_slash)
 
 
 class AppClient(BaseClient):
@@ -51,7 +42,7 @@ class AppClient(BaseClient):
         arg_val = {}
         for arg_def in sub_path.args:
             val = kwargs.get(arg_def.name) or arg_def.default_value
-            if not val and arg_def.mandatory:
+            if val is None and arg_def.mandatory:
                 raise ValueError(f"Argument {arg_def.name} is mandatory and not given")
             arg_val[arg_def.name] = val
         path = sub_path.format.format(**arg_val)
