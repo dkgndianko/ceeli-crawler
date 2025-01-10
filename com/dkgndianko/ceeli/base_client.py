@@ -2,8 +2,10 @@ from pathlib import Path
 from typing import Optional, List
 
 from selenium import webdriver
-from selenium.webdriver.common.by import By
+from selenium.webdriver.common.by import By, ByType
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 class BaseClient:
@@ -65,6 +67,31 @@ class BaseClient:
 
     def find_element_by_id(self, _id: str) -> WebElement:
         return self.browser.find_element(By.ID, _id)
+
+    def wait_for_x_path(self, x_path: str, timeout: int) -> WebElement:
+        return self.__wait_for(By.XPATH, x_path, timeout)
+
+    def wait_for_name(self, name: str, timeout: int) -> WebElement:
+        return self.__wait_for(By.NAME, name, timeout)
+
+    def wait_for_tag_name(self, tag_name: str, timeout: int) -> WebElement:
+        return self.__wait_for(By.TAG_NAME, tag_name, timeout)
+
+    def wait_for_class_name(self, class_name: str, timeout: int) -> WebElement:
+        return self.__wait_for(By.CLASS_NAME, class_name, timeout)
+
+    def wait_for_css_selector(self, css_selector: str, timeout: int) -> WebElement:
+        return self.__wait_for(By.CSS_SELECTOR, css_selector, timeout)
+
+    def wait_for_id(self, _id: str, timeout: int) -> WebElement:
+        return self.__wait_for(By.ID, _id, timeout)
+
+    def __wait_for(self, by: ByType, value: str, timeout: int) -> WebElement:
+        wait = WebDriverWait(self.browser, timeout)
+        try:
+            return wait.until(EC.presence_of_element_located((by, value)))
+        except:
+            return None
 
     def test(self):
         print(str(self.driver_options.to_capabilities()))
