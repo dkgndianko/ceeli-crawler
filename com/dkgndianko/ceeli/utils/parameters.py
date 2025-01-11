@@ -1,5 +1,5 @@
 import re
-from typing import Tuple, List
+from typing import List
 
 from com.dkgndianko.ceeli.utils.param_types import SubPathArg, SubPath
 
