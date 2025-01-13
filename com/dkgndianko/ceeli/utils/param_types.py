@@ -3,13 +3,13 @@ from typing import Any, List
 
 
 @dataclass
-class SubPathArg:
+class TemplateArg:
     name: str
     default_value: Any
     mandatory: bool
 
 
 @dataclass
-class SubPath:
+class Template:
     format: str
-    args: List[SubPathArg]
+    args: List[TemplateArg]

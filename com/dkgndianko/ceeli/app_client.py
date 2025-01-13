@@ -1,48 +1,29 @@
-from pathlib import Path
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Tuple, List
 
 from selenium.webdriver.common.by import By, ByType
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
 from com.dkgndianko.ceeli.base_client import BaseClient
-from com.dkgndianko.ceeli.utils.param_types import SubPath
-from com.dkgndianko.ceeli.utils.parameters import compile_path
+from com.dkgndianko.ceeli.utils.param_types import Template
+from com.dkgndianko.ceeli.utils.parameters import compile_template, format_template
 
 DEFAULT_HOME_PATH = "/"
 HOME_NAME = "home"
 
-ElementLocator = Tuple[ByType, SubPath]
+ElementLocator = Tuple[ByType, Template]
 
 
-def parse_path(input_format: str) -> SubPath:
+def parse_path(input_format: str) -> Template:
     without_leading_slash = input_format[1:] if input_format.startswith("/") else input_format
-    return compile_path(without_leading_slash)
-
-
-def format_template(sub_path: SubPath, **kwargs) -> str:
-    """
-    Format a template by filling in the parameters. It uses either the given parameter or the default values if \
-    available. It can raise an exception if a mandatory parameter or not given and doesn't have a default value
-    :param sub_path: the sub path definition with the template and the list of parameters to provide
-    :param kwargs: the parameters as key-word arguments
-    :return: str, the formatted value
-    :except: ValueError
-    """
-    arg_val = {}
-    for arg_def in sub_path.args:
-        val = kwargs.get(arg_def.name) or arg_def.default_value
-        if val is None and arg_def.mandatory:
-            raise ValueError(f"Argument {arg_def.name} is mandatory and not given")
-        arg_val[arg_def.name] = val
-    return sub_path.format.format(**arg_val)
+    return compile_template(without_leading_slash)
 
 
 class AppClient(BaseClient):
-    def __init__(self, base_url: str, user_data_dir: Path, silent: Optional[bool] = False,
-                 headless: Optional[bool] = False, detached: Optional[bool] = False):
-        super().__init__(user_data_dir, silent, headless, detached)
+    def __init__(self, base_url: str, browser: WebDriver = None):
+        super().__init__(browser)
         self.base_url = base_url[:-1] if base_url.endswith("/") else base_url
-        self.sub_paths: Dict[str, SubPath] = {}
+        self.sub_path_templates: Dict[str, Template] = {}
         self._named_element_locators: Dict[str, ElementLocator] = {}
         self.register_sub_path(HOME_NAME, DEFAULT_HOME_PATH)
 
@@ -62,14 +43,15 @@ class AppClient(BaseClient):
         :return: None
         """
         sub_path = parse_path(sub_path)
-        self.sub_paths[name] = sub_path
+        self.sub_path_templates[name] = sub_path
 
     def _get_url(self, name, **kwargs) -> str:
         try:
-            sub_path = self.sub_paths[name]
+            sub_path_template = self.sub_path_templates[name]
         except KeyError:
-            raise ValueError(f"no sub path with name ${name} registered. Use the {self.register_sub_path.__name__} method to register")
-        path = format_template(sub_path, **kwargs)
+            raise ValueError(f"no sub path with name ${name} registered. Use the {self.register_sub_path.__name__} \
+            method to register")
+        path = format_template(sub_path_template, **kwargs)
         return f"{self.base_url}/{path}"
 
     def home(self):
@@ -91,14 +73,14 @@ class AppClient(BaseClient):
         self.go_to(url)
 
     def __register_named_element_locator(self, name: str, locator_template: str, by: ByType):
-        parsed_locator_template = compile_path(locator_template)
+        parsed_locator_template = compile_template(locator_template)
         self._named_element_locators[name] = (by, parsed_locator_template)
 
     def register_x_path_locator(self, name: str, x_path_template: str):
         """
         Registers a XPath locator template and give it a name. This name could be used later with the methods \
-        :func:`~com.dkgndianko.ceeli.AppClient.get_element_by_locator_name` and \
-        :func:`~com.dkgndianko.ceeli.AppClient.get_elements_by_locator_name`
+        :func:`~com.dkgndianko.ceeli.AppClient.find_element_by_locator_name` and \
+        :func:`~com.dkgndianko.ceeli.AppClient.find_elements_by_locator_name`
         :param name: The name to register to
         :param x_path_template: The XPath locator template
         :return: None
@@ -115,11 +97,11 @@ class AppClient(BaseClient):
             raise ValueError(f"No named element registered with name '{slug}'.")
         return format_template(locator_def, **kwargs), by
 
-    def get_element_by_locator_name(self, name: str, **kwargs) -> WebElement:
+    def find_element_by_locator_name(self, name: str, **kwargs) -> WebElement:
         locator, by = self.__get_locator_by_slug(name, **kwargs)
         return self.browser.find_element(by, locator)
 
-    def get_elements_by_locator_name(self, name: str, **kwargs) -> List[WebElement]:
+    def find_elements_by_locator_name(self, name: str, **kwargs) -> List[WebElement]:
         locator, by = self.__get_locator_by_slug(name, **kwargs)
         return self.browser.find_elements(by, locator)
 

@@ -1,45 +1,21 @@
-from pathlib import Path
-from typing import Optional, List
+from typing import List
 
-from selenium import webdriver
 from selenium.webdriver.common.by import By, ByType
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+from com.dkgndianko.ceeli.driver_builder import WebDriverBuilder
 
 
 class BaseClient:
 
     def __init__(
             self,
-            user_data_dir: Path,
-            silent: Optional[bool] = False,
-            headless: Optional[bool] = False,
-            detached: Optional[bool] = False
+            browser: WebDriver = None
     ):
-        self._browser_started = False
-        self.driver_options = webdriver.ChromeOptions()
-        self.add_driver_option(f"user-data-dir={str(user_data_dir.absolute())}")
-        if silent:
-            self.add_driver_option("--log-level=3")
-        if headless:
-            self.add_driver_option("--headless")
-        if detached:
-            self.add_driver_experimental_option("detach", True)
-        # self.add_driver_option("--user-agent=Ceeli")
-        self.add_driver_option("--incognito")
-        self.browser = webdriver.Chrome(options=self.driver_options)
-        self._browser_started = True
-
-    def add_driver_option(self, option: str):
-        if self._browser_started:
-            raise ValueError("cannot add an option when the browser has started")
-        self.driver_options.add_argument(option)
-
-    def add_driver_experimental_option(self, option_name: str, option_value):
-        if self._browser_started:
-            raise ValueError("cannot add an option when the browser has started")
-        self.driver_options.add_experimental_option(option_name, option_value)
+        self.browser = browser or WebDriverBuilder().set_silent(True).set_incognito(True).set_detached(True).build()
 
     def go_to(self, url: str) -> None:
         self.browser.get(url)
@@ -94,6 +70,5 @@ class BaseClient:
             return None
 
     def test(self):
-        print(str(self.driver_options.to_capabilities()))
         self.browser.get('https://www.google.com')
         print(self.browser.title)
