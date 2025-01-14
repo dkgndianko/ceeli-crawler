@@ -3,6 +3,9 @@ from pathlib import Path
 from selenium.webdriver import Chrome, ChromeOptions
 
 
+DEFAULT_DEBUGGER_HOST = "127.0.0.1"
+DEFAULT_DEBUGGER_PORT = 9222
+
 class WebDriverBuilder:
 
     def __init__(self):
@@ -34,6 +37,17 @@ class WebDriverBuilder:
     def set_incognito(self, incognito: bool = False) -> "WebDriverBuilder":
         if incognito:
             self.add_driver_option("--incognito")
+        return self
+
+    def set_remote_debugger(self, host: str = None, port: int = None) -> "WebDriverBuilder":
+        self.driver_options.debugger_address = f"{host or DEFAULT_DEBUGGER_HOST}:{port or DEFAULT_DEBUGGER_PORT}"
+        return self
+
+    def expose_remote_debugging(self, host: str = None, port: int = None) -> "WebDriverBuilder":
+        if host:
+            self.add_driver_option(f"--remote-debugging-host={host}")
+        if port:
+            self.add_driver_option(f"--remote-debugging-port={port}")
         return self
 
     def add_driver_option(self, option: str):

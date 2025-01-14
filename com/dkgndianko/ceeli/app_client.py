@@ -20,8 +20,8 @@ def parse_path(input_format: str) -> Template:
 
 
 class AppClient(BaseClient):
-    def __init__(self, base_url: str, browser: WebDriver = None):
-        super().__init__(browser)
+    def __init__(self, base_url: str, browser: WebDriver = None, close_on_exit: bool = False):
+        super().__init__(browser, close_on_exit)
         self.base_url = base_url[:-1] if base_url.endswith("/") else base_url
         self.sub_path_templates: Dict[str, Template] = {}
         self._named_element_locators: Dict[str, ElementLocator] = {}
@@ -99,15 +99,12 @@ class AppClient(BaseClient):
 
     def find_element_by_locator_name(self, name: str, **kwargs) -> WebElement:
         locator, by = self.__get_locator_by_slug(name, **kwargs)
-        return self.browser.find_element(by, locator)
+        return self._driver.find_element(by, locator)
 
     def find_elements_by_locator_name(self, name: str, **kwargs) -> List[WebElement]:
         locator, by = self.__get_locator_by_slug(name, **kwargs)
-        return self.browser.find_elements(by, locator)
+        return self._driver.find_elements(by, locator)
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.browser:
-            self.browser.close()
+    def wait_for_locator(self, name: str, timeout: int, **kwargs) -> WebElement:
+        locator, by = self.__get_locator_by_slug(name, **kwargs)
+        return self.__wait_for(by, locator, timeout)
