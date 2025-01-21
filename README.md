@@ -16,6 +16,9 @@ import os
 import sys
 from pathlib import Path
 
+from com.dkgndianko.ceeli.app_client import AppClient
+from com.dkgndianko.ceeli.driver_builder import WebDriverBuilder
+
 # create a browser object to feed it to the client
 # example
 path = Path(os.path.join(sys.path[0], "UserData"))
@@ -24,6 +27,9 @@ client = AppClient("https://web.whatsapp.com", browser)
 ```
 You can also use `ContextManager` like this
 ```python
+from com.dkgndianko.ceeli.app_client import AppClient
+
+
 browser = ...
 with AppClient("https://web.whatsapp.com", browser) as client:
     ...
@@ -31,6 +37,8 @@ with AppClient("https://web.whatsapp.com", browser) as client:
 Next is a short example to showcase what you can do using _ceeli-crawler_.
 
 ```python
+from com.dkgndianko.ceeli.app_client import AppClient
+
 browser = ...
 with AppClient("https://pythoncircle.com/", browser) as client:
     # give a name to a sub-path with possible parameters. Here post_id is mandatory but slug has a default value 'luma_neex'.
@@ -43,7 +51,7 @@ with AppClient("https://pythoncircle.com/", browser) as client:
     # Register another parameterized XPath locator
     client.register_x_path_locator("article",
                                    "/html/body/div[3]/div[1]/div/div/div[2]/div[{article_order}]/div[2]/div[1]/a")
-    # go to home of the web site
+    # go home of the website
     client.home()
     # extract first article using the registered name for the locator
     first_article = client.find_element_by_locator_name("firstArticle")
@@ -52,4 +60,13 @@ with AppClient("https://pythoncircle.com/", browser) as client:
     third_article = client.find_element_by_locator_name("article", article_order=3)
     print(third_article.text)
     third_article.click()
+```
+
+# Development
+The project is using `uv`.
+
+## Building
+You can build the project by running the following command:
+```python
+uv build
 ```
